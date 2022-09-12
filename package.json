@@ -1,0 +1,25 @@
+{
+  "name": "escMail",
+  "version": "1.0.0",
+  "main": "app.js",
+  "repository": "git@github.com:escgmbh/escMail.git",
+  "author": "Benedikt Bergenthal <benedikt@escsoftware.de>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "express-rate-limit": "^6.6.0",
+    "mongoose": "^6.6.0",
+    "node-cache": "^5.1.2",
+    "nodemailer": "^6.7.8",
+    "nodemon": "^2.0.19",
+    "validator": "^13.7.0",
+    "xss-filters": "^1.2.7"
+  }
+}
