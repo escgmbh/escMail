@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM amd64/node:alpine
 RUN yarn global add pm2
 WORKDIR /app
 COPY package.json .

@@ -24,7 +24,7 @@ const customers = require('./customers')
 
 
 app.get('/', (req, res) => {
-    return res.sendStatus(200).send('Alive')
+    return res.send('Alive')
 })
 
 app.post('/', limiter, async (req, res) => {
