@@ -47,7 +47,7 @@ app.post('/', limiter, async (req, res) => {
         return res.status(422).json({ error: 'Unknown customer' })
     }
 
-    sendMail(myAttributes, customer)
+    await sendMail(myAttributes, customer)
     res.status(200).json({ message: 'Mail sent' })
 
 })
@@ -64,7 +64,7 @@ const cleanData = (key, value) => {
     return checkerFunctions[key] && !checkerFunctions[key](value) && xssFilters.inHTMLData(value)
 }
 
-const sendMail = (myAttributes, customer) => {
+const sendMail = async (myAttributes, customer) => {
     let SMTPSSL = false
 
     if (process.env.SMTP_SSL == "true") {
@@ -92,6 +92,8 @@ const sendMail = (myAttributes, customer) => {
             `
         })
     })
+    customer.sendDates.push(new Date())
+    await customer.save()
 }
 
 app.listen(3000, async () => {
