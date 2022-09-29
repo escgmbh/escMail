@@ -101,7 +101,12 @@ const sendMail = async (myAttributes, customer) => {
         }
 
     } else {
-
+        if (customer.prefix == null) {
+            customer.prefix = ''
+        }
+        if (customer.suffix == null) {
+            customer.suffix = ''
+        }
         customer.recipients.forEach((email) => {
             transporter.sendMail({
                 from: process.env.SMTP_FROM,
