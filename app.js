@@ -7,7 +7,7 @@ const xssFilters = require('xss-filters')
 const rateLimit = require('express-rate-limit')
 const NodeCache = require( "node-cache" );
 const mongoose = require('mongoose')
-
+const ejs = require('ejs')
 const myCache = new NodeCache({stdTTL: 600, checkperiod: 1200});
 
 const app = express()
@@ -20,7 +20,7 @@ const limiter = rateLimit({
     max: 10 // limit each IP to 100 requests per windowMs
 })
 
-const customers = require('./customers')
+const { customers, sendLogs } = require('./customers')
 
 
 app.get('/', (req, res) => {
@@ -47,9 +47,12 @@ app.post('/', limiter, async (req, res) => {
         return res.status(422).json({ error: 'Unknown customer' })
     }
 
-    await sendMail(myAttributes, customer)
-    res.status(200).json({ message: 'Mail sent' })
-
+    const err = await sendMail(myAttributes, customer)
+    if (err) {
+        res.status(500).json({ error: err })
+    } else {
+        res.status(200).json({ message: 'Mail sent' })
+    }
 })
 
 const cleanData = (key, value) => {
@@ -80,20 +83,48 @@ const sendMail = async (myAttributes, customer) => {
             pass: process.env.SMTP_PASS
         }
     })
-    customer.recipients.forEach((email) => {
-        transporter.sendMail({
-            from: process.env.SMTP_FROM,
-            to: email,
-            subject: myAttributes.subject,
-            text: `
-            Nachricht von ${myAttributes.name} (${myAttributes.email}):
+    if (customer.useHtml) {
+        const html = await ejs.render(customer.html, { data: myAttributes })
+        try {
 
-            ${myAttributes.msg}
-            `
+            customer.recipients.forEach((email) => {
+                transporter.sendMail({
+                    from: process.env.SMTP_FROM,
+                    to: email,
+                    subject: myAttributes.subject,
+                    html: html
+                })
+            })
+        } catch (e) {
+            console.log(e)
+            return e
+        }
+
+    } else {
+
+        customer.recipients.forEach((email) => {
+            transporter.sendMail({
+                from: process.env.SMTP_FROM,
+                to: email,
+                subject: myAttributes.subject,
+                text: `
+                ${customer.prefix} ${myAttributes.name} (${myAttributes.email}):
+
+                ${myAttributes.msg}
+                ${customer.suffix}
+                `
+            })
         })
+    }
+    const log = new sendLogs({
+        customer: customer._id,
+        timestap: new Date(),
+        metadata: {
+            name: customer.name,
+        }
     })
-    customer.sendDates.push(new Date())
-    await customer.save()
+    await log.save()
+    return null
 }
 
 app.listen(3000, async () => {
